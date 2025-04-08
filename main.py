@@ -1,11 +1,7 @@
-import subprocess
-import sys
-subprocess.check_call([sys.executable, "-m", "pip", "install", "cloudscraper"])
 import socket
 import threading
 import time
 import random
-import cloudscraper
 import requests
 import ctypes
 
