@@ -72,7 +72,7 @@ class TelnetClient:
         self.close()
 
 def scan_telnet(output: str):
-    cmd = ["zmap", "-p23", "-o", output, "-r", "10000"]
+    cmd = ["zmap", "-p23", "-o", output]
     process = subprocess.Popen(cmd)
     time.sleep(SCAN_DURATION)
     process.terminate()
