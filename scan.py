@@ -8,8 +8,6 @@ def scan_telnet(output: str) -> None:
     cmd = [
         "zmap",
         "-p23",
-        "-B",
-        "10M",
         "-o",
         output,
     ]  # Internet bandwitdh usage caped at 10Mbps, if remove it you might lose control of the vps (Zmap might use all the bandwidth)
