@@ -28,7 +28,7 @@ CREDENTIALS = [
 TELNET_TIMEOUT = 0.05
 MAX_WORKERS = 50
 PAYLOAD = "echo Works"
-SCAN_DURATION = 300
+SCAN_DURATION = 150
 
 class TelnetClient:
     def __init__(self, host, port=23, timeout=TELNET_TIMEOUT):
